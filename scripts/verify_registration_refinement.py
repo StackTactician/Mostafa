@@ -3,7 +3,7 @@ import sys
 import django
 import random
 
-sys.path.append(os.getcwd())
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'food_delivery_project.settings')
 django.setup()
 
