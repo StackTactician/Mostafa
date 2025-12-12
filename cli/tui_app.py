@@ -40,8 +40,14 @@ class RegisterScreen(Screen):
     #driver_fields {
         display: none;
     }
-    .driver-mode #driver_fields {
-        display: block;
+    #btn_container {
+        height: 3;
+        margin-top: 1;
+        align: center middle;
+    }
+    #btn_container Button {
+        width: 20;
+        margin: 0 1;
     }
     """
     
@@ -73,8 +79,11 @@ class RegisterScreen(Screen):
                 id="driver_fields"
             ),
             
-            Button("Register", variant="primary", id="register_btn"),
-            Button("Back", variant="default", id="back_btn"),
+            Horizontal(
+                Button("Register", variant="primary", id="register_btn"),
+                Button("Back", variant="default", id="back_btn"),
+                id="btn_container"
+            ),
             id="register_dialog"
         )
     
