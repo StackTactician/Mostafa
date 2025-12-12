@@ -42,8 +42,20 @@ def save_user_profile(sender, instance, **kwargs):
         UserProfile.objects.create(user=instance)
 
 class Restaurant(models.Model):
+    CUISINE_CHOICES = [
+        ('Italian', 'Italian'),
+        ('Chinese', 'Chinese'),
+        ('Indian', 'Indian'),
+        ('Japanese', 'Japanese'),
+        ('Fast Food', 'Fast Food'),
+        ('American', 'American'),
+        ('Mexican', 'Mexican'),
+        ('Healthy', 'Healthy'),
+        ('Other', 'Other'),
+    ]
     name = models.CharField(max_length=100)
     description = models.TextField()
+    cuisine = models.CharField(max_length=50, choices=CUISINE_CHOICES, default='Other')
     image = models.ImageField(upload_to='restaurant_images/', blank=True, null=True)
     address = models.CharField(max_length=200)
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='restaurants', null=True, blank=True)
@@ -66,6 +78,7 @@ class Order(models.Model):
         ('Pending', 'Pending'),
         ('Delivering', 'Delivering'),
         ('Delivered', 'Delivered'),
+        ('Cancelled', 'Cancelled'),
     ]
 
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
@@ -88,3 +101,14 @@ class OrderItem(models.Model):
 
     def __str__(self):
         return f"{self.quantity} x {self.menu_item.name}"
+
+class Review(models.Model):
+    order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name='review')
+    restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE, related_name='reviews')
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    rating = models.IntegerField(choices=[(i, i) for i in range(1, 6)])
+    comment = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Review for {self.restaurant.name} by {self.user.username}"
