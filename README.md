@@ -1,13 +1,13 @@
-# Mostafa Food Delivery
+# Mostafa Food Delivery CLI
 
-A CLI food delivery application built with Django.
+A command-line interface (CLI) food delivery application built with Django. This application allows users to interact with the food delivery service directly from their terminal.
 
 ## Features
 
-- **User Roles**: Customer and Driver.
-- **Restaurant Management**: Menu items, orders.
-- **Order Flow**: Place order, driver acceptance, delivery confirmation.
-- **Dashboard**: Customer and Driver dashboards.
+- **User Roles**: Customer and Driver roles accessible via CLI commands.
+- **Restaurant Management**: Manage menu items and orders through CLI commands.
+- **Order Flow**: Place orders, accept driver assignments, and confirm deliveries, all via the command line.
+- **Dashboard**: Access customer and driver dashboards using CLI commands to view relevant information.
 
 ## Setup
 
@@ -46,10 +46,22 @@ A CLI food delivery application built with Django.
     python manage.py createsuperuser
     ```
 
-7.  **Run the Server:**
+## Usage (CLI Commands)
+
+Once the setup is complete, you can interact with the application using the following CLI commands:
+
+-   **Running the application**: Since this is a CLI application, you will primarily interact with it through custom management commands or scripts. Refer to the `cli/` directory for available commands.
+
     ```bash
-    python manage.py runserver
+    python manage.py <command> [options]
     ```
+
+    Example:
+    ```bash
+    python manage.py list_restaurants
+    ```
+
+-   **Exploring available commands**: Check the `cli/` directory for custom Django management commands that implement the application's features.
 
 ## Scripts
 
