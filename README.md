@@ -1,6 +1,6 @@
-# Food Delivery App
+# Mostafa Food Delivery
 
-A full-stack food delivery application built with Django.
+A CLI food delivery application built with Django.
 
 ## Features
 
