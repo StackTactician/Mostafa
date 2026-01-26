@@ -17,4 +17,6 @@ urlpatterns = [
     path('api/register/', api_views.RegisterView.as_view(), name='api_register'),
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('api/send-otp/', api_views.SendOTPView.as_view(), name='send_otp'),
+    path('api/verify-otp/', api_views.VerifyOTPView.as_view(), name='verify_otp'),
 ]

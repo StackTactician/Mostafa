@@ -104,7 +104,6 @@ class OrderViewSet(viewsets.ModelViewSet):
         if order.driver == request.user:
             order.driver_confirmed = True
             order.save()
-            # Check logic duplicate from views.py check_delivery_status
             if order.customer_confirmed:
                 order.status = 'Delivered'
                 order.save()
@@ -118,3 +117,112 @@ class UserProfileViewSet(viewsets.ViewSet):
     def me(self, request):
         serializer = UserProfileSerializer(request.user.userprofile)
         return Response(serializer.data)
+
+class SendOTPView(generics.GenericAPIView):
+    """Send OTP to email for verification"""
+    permission_classes = [permissions.AllowAny]
+    
+    def post(self, request):
+        from django.core.mail import send_mail
+        from django.utils import timezone
+        from datetime import timedelta
+        import random
+        from .models import EmailOTP
+        
+        email = request.data.get('email')
+        if not email:
+            return Response({'error': 'Email is required'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Generate 6-digit OTP
+        otp_code = str(random.randint(100000, 999999))
+        
+        # Delete any existing OTPs for this email
+        EmailOTP.objects.filter(email=email, is_verified=False).delete()
+        
+        # Create new OTP with 5-minute expiry
+        expires_at = timezone.now() + timedelta(minutes=5)
+        EmailOTP.objects.create(
+            email=email,
+            otp_code=otp_code,
+            expires_at=expires_at
+        )
+        
+        # Send email
+        try:
+            send_mail(
+                subject='Your Mostafa Verification Code',
+                message=f'''Hi there!
+
+Your verification code is: {otp_code}
+
+This code will expire in 5 minutes.
+
+If you didn't request this code, please ignore this email.
+
+Thanks,
+Mostafa Team''',
+                from_email='noreply@fooddelivery.com',
+                recipient_list=[email],
+                fail_silently=False,
+            )
+            
+            return Response({
+                'message': 'OTP sent successfully',
+                'email': email
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({
+                'error': f'Failed to send email: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class VerifyOTPView(generics.GenericAPIView):
+    """Verify OTP code"""
+    permission_classes = [permissions.AllowAny]
+    
+    def post(self, request):
+        from django.utils import timezone
+        from .models import EmailOTP
+        
+        email = request.data.get('email')
+        otp_code = request.data.get('otp')
+        
+        if not email or not otp_code:
+            return Response({
+                'error': 'Email and OTP are required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            # Get the most recent OTP for this email
+            otp_obj = EmailOTP.objects.filter(
+                email=email,
+                otp_code=otp_code,
+                is_verified=False
+            ).first()
+            
+            if not otp_obj:
+                return Response({
+                    'verified': False,
+                    'message': 'Invalid OTP code'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Check if expired
+            if otp_obj.is_expired():
+                return Response({
+                    'verified': False,
+                    'message': 'OTP has expired. Please request a new one.'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Mark as verified
+            otp_obj.is_verified = True
+            otp_obj.save()
+            
+            return Response({
+                'verified': True,
+                'message': 'Email verified successfully'
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response({
+                'error': f'Verification failed: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+

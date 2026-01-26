@@ -112,3 +112,22 @@ class Review(models.Model):
 
     def __str__(self):
         return f"Review for {self.restaurant.name} by {self.user.username}"
+
+class EmailOTP(models.Model):
+    """Store email verification OTP codes"""
+    email = models.EmailField()
+    otp_code = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    is_verified = models.BooleanField(default=False)
+    
+    class Meta:
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"OTP for {self.email} - {'Verified' if self.is_verified else 'Pending'}"
+    
+    def is_expired(self):
+        from django.utils import timezone
+        return timezone.now() > self.expires_at
+

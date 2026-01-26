@@ -1,3 +1,15 @@
+# Django Backend
 Django>=5.0
 psycopg2-binary
 Pillow
+djangorestframework
+djangorestframework-simplejwt
+python-decouple
+gunicorn
+whitenoise
+
+# CLI Application
+typer[all]
+rich
+questionary
+requests

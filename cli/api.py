@@ -86,3 +86,26 @@ class ApiService:
     def complete_job(self, order_id):
         response = requests.post(f"{BASE_URL}/orders/{order_id}/complete_job/", headers=self._get_headers())
         return response.status_code == 200
+    
+    # OTP Methods
+    def send_otp(self, email):
+        """Send OTP to email"""
+        try:
+            response = requests.post(f"{BASE_URL}/send-otp/", json={"email": email})
+            if response.status_code == 200:
+                return True, response.json().get('message', 'OTP sent')
+            return False, response.json().get('error', 'Failed to send OTP')
+        except Exception as e:
+            return False, str(e)
+    
+    def verify_otp(self, email, otp_code):
+        """Verify OTP code"""
+        try:
+            response = requests.post(f"{BASE_URL}/verify-otp/", json={"email": email, "otp": otp_code})
+            data = response.json()
+            if response.status_code == 200 and data.get('verified'):
+                return True, data.get('message', 'Verified')
+            return False, data.get('message', 'Invalid OTP')
+        except Exception as e:
+            return False, str(e)
+

@@ -2,17 +2,80 @@ from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
 from rich import box
+import os
 
 console = Console()
 
+def clear_screen():
+    """Clear the terminal screen"""
+    os.system('cls' if os.name == 'nt' else 'clear')
+
 def print_welcome():
-    console.print(Panel.fit("[bold magenta]Welcome to Food Delivery CLI[/bold magenta]", border_style="green"))
+    console.print(Panel.fit("[bold magenta]Welcome to Mostafa CLI[/bold magenta]", border_style="green"))
 
 def print_error(msg):
-    console.print(f"[bold red]Error:[/bold red] {msg}")
+    console.print(f"[bold red]❌ Error:[/bold red] {msg}")
 
 def print_success(msg):
-    console.print(f"[bold green]Success:[/bold green] {msg}")
+    console.print(f"[bold green]✅ Success:[/bold green] {msg}")
+
+def display_profile(profile):
+    """Display user profile information."""
+    user = profile.get('user', {})
+    username = user.get('username', 'Unknown')
+    email = user.get('email', 'N/A')
+    role = profile.get('role', 'Unknown')
+    
+    table = Table(title="👤 Your Profile", box=box.ROUNDED, show_header=False)
+    table.add_column("Field", style="cyan bold")
+    table.add_column("Value", style="white")
+    
+    table.add_row("Username", username)
+    table.add_row("Email", email)
+    table.add_row("Role", role)
+    table.add_row("Phone", profile.get('phone_number', 'N/A'))
+    
+    if role == "Customer":
+        table.add_row("Address", profile.get('address', 'N/A'))
+    elif role == "Driver":
+        table.add_row("License", profile.get('license_number', 'N/A'))
+        table.add_row("Vehicle Plate", profile.get('vehicle_plate', 'N/A'))
+        table.add_row("Vehicle Type", profile.get('vehicle_type', 'N/A'))
+        table.add_row("Bank Account", profile.get('bank_account', 'N/A'))
+    
+    console.print(table)
+
+def display_cart(cart, all_items):
+    """Display shopping cart contents."""
+    table = Table(title="🛒 Shopping Cart", box=box.ROUNDED)
+    table.add_column("Item ID", style="cyan", no_wrap=True)
+    table.add_column("Item Name", style="yellow")
+    table.add_column("Restaurant", style="blue")
+    table.add_column("Price", style="green", justify="right")
+    table.add_column("Quantity", style="magenta", justify="center")
+    table.add_column("Subtotal", style="green bold", justify="right")
+    
+    total = 0
+    for item_id, qty in cart.items():
+        item_info = all_items.get(item_id)
+        if item_info:
+            price = float(item_info['price'])
+            subtotal = price * qty
+            total += subtotal
+            
+            table.add_row(
+                str(item_id),
+                item_info['name'],
+                item_info['restaurant'],
+                f"${price:.2f}",
+                str(qty),
+                f"${subtotal:.2f}"
+            )
+        else:
+            table.add_row(str(item_id), "Unknown Item", "N/A", "N/A", str(qty), "N/A")
+    
+    console.print(table)
+    console.print(f"\n[bold green]Total: ${total:.2f}[/bold green]\n")
 
 def display_restaurants(restaurants):
     table = Table(title="Available Restaurants", box=box.ROUNDED)
