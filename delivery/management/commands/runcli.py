@@ -32,7 +32,7 @@ def main():
     """Interactive main menu - browse, order, and manage your account."""
     while True:
         ui.clear_screen()
-        ui.console.print("\n[bold magenta]🍽️  Mostafa Main Menu[/bold magenta]\n")
+        ui.console.print("\n[bold magenta]Mostafa Main Menu[/bold magenta]\n")
         
         # Check if logged in
         profile = api.get_my_profile()
@@ -47,26 +47,26 @@ def main():
         choices = []
         
         if not profile:
-            choices.extend(["🔐 Login", "📝 Register"])
+            choices.extend(["Login", "Register"])
         else:
             choices.extend([
-                "🍽️  Browse Restaurants",
-                "📋 View My Orders",
-                "🛒 View Cart",
-                "👤 My Profile",
+                "Browse Restaurants",
+                "View My Orders",
+                "View Cart",
+                "My Profile",
             ])
             
             # Add driver-specific options
             if profile.get('role') == 'Driver':
                 choices.extend([
-                    "🚗 Driver: View Jobs",
-                    "🚗 Driver: Accept Job",
-                    "🚗 Driver: Complete Job",
+                    "Driver: View Jobs",
+                    "Driver: Accept Job",
+                    "Driver: Complete Job",
                 ])
             
-            choices.append("🚪 Logout")
+            choices.append("Logout")
         
-        choices.append("❌ Exit")
+        choices.append("Exit")
         
         action = questionary.select(
             "What would you like to do?",
@@ -74,45 +74,45 @@ def main():
             style=custom_style
         ).ask()
         
-        if not action or action == "❌ Exit":
-            ui.console.print("\n[cyan]Thanks for using Mostafa! Goodbye! 👋[/cyan]\n")
+        if not action or action == "Exit":
+            ui.console.print("\n[cyan]Thanks for using Mostafa! Goodbye![/cyan]\n")
             break
         
         # Handle menu actions
-        if action == "🔐 Login":
+        if action == "Login":
             ui.clear_screen()
             login()
-        elif action == "📝 Register":
+        elif action == "Register":
             ui.clear_screen()
             register()
-        elif action == "🍽️  Browse Restaurants":
+        elif action == "Browse Restaurants":
             ui.clear_screen()
             browse(return_to_menu=True)
-        elif action == "📋 View My Orders":
+        elif action == "View My Orders":
             ui.clear_screen()
             list_orders()
             input("\nPress Enter to continue...")
-        elif action == "🛒 View Cart":
+        elif action == "View Cart":
             ui.clear_screen()
             view_cart_internal()
             input("\nPress Enter to continue...")
-        elif action == "👤 My Profile":
+        elif action == "My Profile":
             ui.clear_screen()
             ui.display_profile(profile)
             input("\nPress Enter to continue...")
-        elif action == "🚗 Driver: View Jobs":
+        elif action == "Driver: View Jobs":
             ui.clear_screen()
             available_jobs()
             input("\nPress Enter to continue...")
-        elif action == "🚗 Driver: Accept Job":
+        elif action == "Driver: Accept Job":
             ui.clear_screen()
             accept_job()
             input("\nPress Enter to continue...")
-        elif action == "🚗 Driver: Complete Job":
+        elif action == "Driver: Complete Job":
             ui.clear_screen()
             complete_job()
             input("\nPress Enter to continue...")
-        elif action == "🚪 Logout":
+        elif action == "Logout":
             logout()
 
 # ==================== AUTHENTICATION COMMANDS ====================
@@ -120,7 +120,7 @@ def main():
 @app.command()
 def login():
     """Log in to the system with interactive prompts."""
-    ui.console.print("\n[bold cyan]🔐 Login to Mostafa[/bold cyan]\n")
+    ui.console.print("\n[bold cyan]Login to Mostafa[/bold cyan]\n")
     
     username = questionary.text(
         "Username:",
@@ -212,7 +212,7 @@ def view_menu(restaurant_id: int):
 def browse(return_to_menu: bool = False):
     """Interactive browsing: restaurants → menu → add to cart."""
     ui.clear_screen()
-    ui.console.print("\n[bold magenta]🍽️  Browse Restaurants & Menus[/bold magenta]\n")
+    ui.console.print("\n[bold magenta]Browse Restaurants & Menus[/bold magenta]\n")
     
     restaurants = api.get_restaurants()
     if not restaurants:
@@ -228,7 +228,7 @@ def browse(return_to_menu: bool = False):
             f"{r['id']}: {r['name']} ({r['cuisine']})" 
             for r in restaurants
         ]
-        restaurant_choices.append("🚪 Exit")
+        restaurant_choices.append("Exit")
         
         selected = questionary.select(
             "Select a restaurant to view menu:",
@@ -236,7 +236,7 @@ def browse(return_to_menu: bool = False):
             style=custom_style
         ).ask()
         
-        if not selected or selected == "🚪 Exit":
+        if not selected or selected == "Exit":
             break
         
         # Extract restaurant ID
@@ -247,7 +247,7 @@ def browse(return_to_menu: bool = False):
             continue
         
         # Show menu
-        ui.console.print(f"\n[bold cyan]📋 Menu for {restaurant['name']}[/bold cyan]\n")
+        ui.console.print(f"\n[bold cyan]Menu for {restaurant['name']}[/bold cyan]\n")
         ui.display_menu(restaurant['name'], restaurant['menu_items'])
         
         # Menu interaction loop
@@ -256,7 +256,7 @@ def browse(return_to_menu: bool = False):
                 f"{item['id']}: {item['name']} - ${item['price']}" 
                 for item in restaurant['menu_items']
             ]
-            menu_choices.extend(["🛒 View Cart", "💳 Checkout", "⬅️  Back to Restaurants"])
+            menu_choices.extend(["View Cart", "Checkout", "Back to Restaurants"])
             
             menu_action = questionary.select(
                 "Select an item to add to cart:",
@@ -264,11 +264,11 @@ def browse(return_to_menu: bool = False):
                 style=custom_style
             ).ask()
             
-            if not menu_action or menu_action == "⬅️  Back to Restaurants":
+            if not menu_action or menu_action == "Back to Restaurants":
                 break
-            elif menu_action == "🛒 View Cart":
+            elif menu_action == "View Cart":
                 view_cart_internal()
-            elif menu_action == "💳 Checkout":
+            elif menu_action == "Checkout":
                 checkout_cart()
                 if not return_to_menu:
                     return
@@ -329,7 +329,7 @@ def view_cart():
 def view_cart_internal():
     """Internal function to view cart (used by both command and browse)."""
     if not cart:
-        ui.console.print("[yellow]🛒 Your cart is empty[/yellow]")
+        ui.console.print("[yellow]Your cart is empty[/yellow]")
         return
     
     # Fetch all restaurants to get item details
@@ -392,7 +392,7 @@ def checkout_cart():
     resp, code = api.create_order(items)
     
     if code == 201:
-        ui.print_success(f"✅ Order #{resp['id']} placed successfully!")
+        ui.print_success(f"Order #{resp['id']} placed successfully!")
         ui.console.print(f"[green]Total: ${resp['total_price']}[/green]")
         cart.clear()
     else:
@@ -503,7 +503,7 @@ def accept_job(order_id: Optional[int] = None):
         order_id = int(selected.split("#")[1].split(" ")[0])
     
     if api.accept_job(order_id):
-        ui.print_success(f"✅ Job #{order_id} accepted!")
+        ui.print_success(f"Job #{order_id} accepted!")
     else:
         ui.print_error("Failed to accept job.")
 
@@ -543,7 +543,7 @@ def complete_job(order_id: Optional[int] = None):
     
     if confirm:
         if api.complete_job(order_id):
-            ui.print_success(f"✅ Job #{order_id} completed!")
+            ui.print_success(f"Job #{order_id} completed!")
         else:
             ui.print_error("Failed to complete job.")
     else:

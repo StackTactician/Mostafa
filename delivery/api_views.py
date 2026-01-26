@@ -17,7 +17,7 @@ class RegisterView(generics.CreateAPIView):
         if serializer.is_valid():
             user = serializer.save()
             
-            # Generate Tokens
+
             refresh = RefreshToken.for_user(user)
             tokens = {
                 'refresh': str(refresh),
@@ -42,9 +42,9 @@ class OrderViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         if hasattr(user, 'userprofile') and user.userprofile.role == 'Driver':
-            # Drivers see available orders + their deliveries
+
             return Order.objects.filter(driver=user) | Order.objects.filter(driver=None, status='Pending')
-        # Customers see their own orders
+
         return Order.objects.filter(user=user)
 
     def create(self, request, *args, **kwargs):
@@ -69,7 +69,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         if order.user == request.user:
             order.customer_confirmed = True
             order.save()
-            # Check if both confirmed
+
             if order.driver_confirmed:
                 order.status = 'Delivered'
                 order.save()
@@ -133,13 +133,13 @@ class SendOTPView(generics.GenericAPIView):
         if not email:
             return Response({'error': 'Email is required'}, status=status.HTTP_400_BAD_REQUEST)
         
-        # Generate 6-digit OTP
+
         otp_code = str(random.randint(100000, 999999))
         
-        # Delete any existing OTPs for this email
+
         EmailOTP.objects.filter(email=email, is_verified=False).delete()
         
-        # Create new OTP with 5-minute expiry
+
         expires_at = timezone.now() + timedelta(minutes=5)
         EmailOTP.objects.create(
             email=email,
@@ -147,7 +147,7 @@ class SendOTPView(generics.GenericAPIView):
             expires_at=expires_at
         )
         
-        # Send email
+
         try:
             send_mail(
                 subject='Your Mostafa Verification Code',
@@ -192,7 +192,7 @@ class VerifyOTPView(generics.GenericAPIView):
             }, status=status.HTTP_400_BAD_REQUEST)
         
         try:
-            # Get the most recent OTP for this email
+
             otp_obj = EmailOTP.objects.filter(
                 email=email,
                 otp_code=otp_code,
@@ -205,14 +205,14 @@ class VerifyOTPView(generics.GenericAPIView):
                     'message': 'Invalid OTP code'
                 }, status=status.HTTP_400_BAD_REQUEST)
             
-            # Check if expired
+
             if otp_obj.is_expired():
                 return Response({
                     'verified': False,
                     'message': 'OTP has expired. Please request a new one.'
                 }, status=status.HTTP_400_BAD_REQUEST)
             
-            # Mark as verified
+
             otp_obj.is_verified = True
             otp_obj.save()
             

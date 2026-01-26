@@ -1,4 +1,4 @@
-# Mostafa CLI Application
+# Mostafa
 
 A full-stack food delivery application with Django REST API backend and an interactive CLI frontend.
 

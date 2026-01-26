@@ -12,14 +12,14 @@ class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='Customer')
     
-    # Common Fields
+
     phone_number = models.CharField(max_length=15, blank=True, null=True)
     profile_photo = models.ImageField(upload_to='profile_photos/', blank=True, null=True)
     
-    # Customer Fields
+
     address = models.TextField(blank=True, null=True, help_text="Home or default delivery address")
     
-    # Driver Fields
+
     license_number = models.CharField(max_length=50, blank=True, null=True)
     vehicle_plate = models.CharField(max_length=20, blank=True, null=True)
     vehicle_type = models.CharField(max_length=50, blank=True, null=True, help_text="e.g. Bike, Car, Scooter")

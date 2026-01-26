@@ -14,10 +14,10 @@ def print_welcome():
     console.print(Panel.fit("[bold magenta]Welcome to Mostafa CLI[/bold magenta]", border_style="green"))
 
 def print_error(msg):
-    console.print(f"[bold red]❌ Error:[/bold red] {msg}")
+    console.print(f"[bold red]Error:[/bold red] {msg}")
 
 def print_success(msg):
-    console.print(f"[bold green]✅ Success:[/bold green] {msg}")
+    console.print(f"[bold green]Success:[/bold green] {msg}")
 
 def display_profile(profile):
     """Display user profile information."""
@@ -26,7 +26,7 @@ def display_profile(profile):
     email = user.get('email', 'N/A')
     role = profile.get('role', 'Unknown')
     
-    table = Table(title="👤 Your Profile", box=box.ROUNDED, show_header=False)
+    table = Table(title="Your Profile", box=box.ROUNDED, show_header=False)
     table.add_column("Field", style="cyan bold")
     table.add_column("Value", style="white")
     
@@ -47,7 +47,7 @@ def display_profile(profile):
 
 def display_cart(cart, all_items):
     """Display shopping cart contents."""
-    table = Table(title="🛒 Shopping Cart", box=box.ROUNDED)
+    table = Table(title="Shopping Cart", box=box.ROUNDED)
     table.add_column("Item ID", style="cyan", no_wrap=True)
     table.add_column("Item Name", style="yellow")
     table.add_column("Restaurant", style="blue")

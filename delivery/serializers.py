@@ -53,10 +53,10 @@ class UserRegistrationSerializer(serializers.Serializer):
     role = serializers.ChoiceField(choices=[('Customer', 'Customer'), ('Driver', 'Driver')])
     phone_number = serializers.CharField(required=False, allow_blank=True)
     
-    # Customer fields
+
     address = serializers.CharField(required=False, allow_blank=True)
     
-    # Driver fields
+
     license_number = serializers.CharField(required=False, allow_blank=True)
     vehicle_plate = serializers.CharField(required=False, allow_blank=True)
     vehicle_type = serializers.CharField(required=False, allow_blank=True)
@@ -66,7 +66,7 @@ class UserRegistrationSerializer(serializers.Serializer):
         user_data = {k: validated_data.get(k) for k in ['username', 'email', 'password']}
         user = User.objects.create_user(**user_data)
         
-        # Profile fields
+
         profile_data = {
             'role': validated_data.get('role'),
             'phone_number': validated_data.get('phone_number'),
@@ -77,9 +77,7 @@ class UserRegistrationSerializer(serializers.Serializer):
             'bank_account': validated_data.get('bank_account'),
         }
         
-        # UserProfile is created by signal? 
-        # Checking models.py (Step 84): yes, signal creates it.
-        # So we just update it.
+
         profile = user.userprofile
         for attr, value in profile_data.items():
             if value:
@@ -88,14 +86,14 @@ class UserRegistrationSerializer(serializers.Serializer):
         return user
 
 class CreateOrderSerializer(serializers.Serializer):
-    # Expects a dictionary of {menu_item_id: quantity}
+
     items = serializers.DictField(child=serializers.IntegerField())
 
     def create(self, validated_data):
         user = self.context['request'].user
         items_data = validated_data['items']
         
-        # Calculate total and create order
+
         total_price = 0
         order = Order.objects.create(user=user, total_price=0)
         
@@ -110,7 +108,7 @@ class CreateOrderSerializer(serializers.Serializer):
                 )
                 total_price += menu_item.price * quantity
             except MenuItem.DoesNotExist:
-                pass # Ignore invalid items
+                pass
         
         order.total_price = total_price
         order.save()
