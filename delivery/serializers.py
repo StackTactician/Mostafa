@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
+from django.db import transaction
 from .models import Restaurant, MenuItem, Order, OrderItem, UserProfile
 
 class UserSerializer(serializers.ModelSerializer):
@@ -42,8 +43,9 @@ class OrderSerializer(serializers.ModelSerializer):
         fields = ['id', 'status', 'total_price', 'created_at', 'items', 'restaurant_name']
         
     def get_restaurant_name(self, obj):
-        if obj.items.exists():
-            return obj.items.first().menu_item.restaurant.name
+        first_item = obj.items.first()
+        if first_item:
+            return first_item.menu_item.restaurant.name
         return "Unknown"
 
 class UserRegistrationSerializer(serializers.Serializer):
@@ -89,27 +91,57 @@ class CreateOrderSerializer(serializers.Serializer):
 
     items = serializers.DictField(child=serializers.IntegerField())
 
+    def validate_items(self, value):
+        if not value:
+            raise serializers.ValidationError('At least one item is required.')
+
+        normalized_ids = []
+        for item_id, quantity in value.items():
+            if quantity <= 0:
+                raise serializers.ValidationError(f'Quantity for item {item_id} must be greater than zero.')
+            try:
+                normalized_ids.append(int(item_id))
+            except (TypeError, ValueError):
+                raise serializers.ValidationError(f'Invalid menu item id: {item_id}')
+
+        menu_items = MenuItem.objects.filter(id__in=normalized_ids).select_related('restaurant')
+        found_by_id = {item.id: item for item in menu_items}
+
+        missing_ids = [str(item_id) for item_id in normalized_ids if item_id not in found_by_id]
+        if missing_ids:
+            raise serializers.ValidationError(f'Menu item(s) not found: {", ".join(missing_ids)}')
+
+        value['_menu_items_by_id'] = found_by_id
+        value['_normalized_ids'] = normalized_ids
+        return value
+
     def create(self, validated_data):
         user = self.context['request'].user
         items_data = validated_data['items']
-        
+
+        menu_items_by_id = items_data.pop('_menu_items_by_id')
+        normalized_ids = items_data.pop('_normalized_ids')
 
         total_price = 0
-        order = Order.objects.create(user=user, total_price=0)
-        
-        for item_id, quantity in items_data.items():
-            try:
-                menu_item = MenuItem.objects.get(id=item_id)
-                OrderItem.objects.create(
-                    order=order,
-                    menu_item=menu_item,
-                    quantity=quantity,
-                    price_at_time=menu_item.price
-                )
+        with transaction.atomic():
+            order = Order.objects.create(user=user, total_price=0)
+            order_items = []
+
+            for item_id in normalized_ids:
+                quantity = items_data[str(item_id)] if str(item_id) in items_data else items_data[item_id]
+                menu_item = menu_items_by_id[item_id]
                 total_price += menu_item.price * quantity
-            except MenuItem.DoesNotExist:
-                pass
-        
-        order.total_price = total_price
-        order.save()
+                order_items.append(
+                    OrderItem(
+                        order=order,
+                        menu_item=menu_item,
+                        quantity=quantity,
+                        price_at_time=menu_item.price,
+                    )
+                )
+
+            OrderItem.objects.bulk_create(order_items)
+            order.total_price = total_price
+            order.save(update_fields=['total_price'])
+
         return order

@@ -2,7 +2,6 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 from django.contrib.auth.models import User
-from delivery.models import UserProfile
 
 class AuthTests(APITestCase):
     def test_registration(self):
@@ -23,7 +22,8 @@ class AuthTests(APITestCase):
     def test_login(self):
         """Test user login and token retrieval"""
         user = User.objects.create_user(username='testuser', password='password123')
-        UserProfile.objects.create(user=user, role='Customer')
+        user.userprofile.role = 'Customer'
+        user.userprofile.save(update_fields=['role'])
         
         url = reverse('token_obtain_pair')
         data = {
