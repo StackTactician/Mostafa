@@ -9,11 +9,11 @@ class OrderTests(APITestCase):
         # Create Users
         self.customer = User.objects.create_user(username='customer', password='password123')
         self.customer.userprofile.role = 'Customer'
-        self.customer.userprofile.save(update_fields=['role'])
-
+        self.customer.userprofile.save()
+        
         self.driver = User.objects.create_user(username='driver', password='password123')
         self.driver.userprofile.role = 'Driver'
-        self.driver.userprofile.save(update_fields=['role'])
+        self.driver.userprofile.save()
         
         # Create Restaurant & Menu
         self.restaurant = Restaurant.objects.create(

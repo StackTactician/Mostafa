@@ -23,7 +23,7 @@ class AuthTests(APITestCase):
         """Test user login and token retrieval"""
         user = User.objects.create_user(username='testuser', password='password123')
         user.userprofile.role = 'Customer'
-        user.userprofile.save(update_fields=['role'])
+        user.userprofile.save()
         
         url = reverse('token_obtain_pair')
         data = {
