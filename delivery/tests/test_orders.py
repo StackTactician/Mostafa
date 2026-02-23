@@ -2,16 +2,18 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 from django.contrib.auth.models import User
-from delivery.models import UserProfile, Order, Restaurant, MenuItem, OrderItem
+from delivery.models import Order, Restaurant, MenuItem, OrderItem
 
 class OrderTests(APITestCase):
     def setUp(self):
         # Create Users
         self.customer = User.objects.create_user(username='customer', password='password123')
-        UserProfile.objects.create(user=self.customer, role='Customer')
+        self.customer.userprofile.role = 'Customer'
+        self.customer.userprofile.save()
         
         self.driver = User.objects.create_user(username='driver', password='password123')
-        UserProfile.objects.create(user=self.driver, role='Driver')
+        self.driver.userprofile.role = 'Driver'
+        self.driver.userprofile.save()
         
         # Create Restaurant & Menu
         self.restaurant = Restaurant.objects.create(
