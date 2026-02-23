@@ -1,9 +1,10 @@
+from django.db import transaction
+from django.db.models import Q, Prefetch
 from rest_framework import viewsets, status, permissions, generics
 from rest_framework.response import Response
 from rest_framework.decorators import action
-from django.shortcuts import get_object_or_404
 from django.contrib.auth.models import User
-from .models import Restaurant, Order, MenuItem
+from .models import Restaurant, Order, OrderItem
 from .serializers import RestaurantSerializer, OrderSerializer, CreateOrderSerializer, UserProfileSerializer, UserSerializer, UserRegistrationSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 
@@ -31,7 +32,7 @@ class RegisterView(generics.CreateAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class RestaurantViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Restaurant.objects.all()
+    queryset = Restaurant.objects.prefetch_related('menu_items').all()
     serializer_class = RestaurantSerializer
     permission_classes = [permissions.IsAuthenticated]
 
@@ -41,18 +42,20 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        base_qs = Order.objects.select_related('user', 'driver').prefetch_related(
+            Prefetch('items', queryset=OrderItem.objects.select_related('menu_item__restaurant'))
+        )
+
         if hasattr(user, 'userprofile') and user.userprofile.role == 'Driver':
+            return base_qs.filter(Q(driver=user) | Q(driver__isnull=True, status='Pending')).order_by('-created_at').distinct()
 
-            return Order.objects.filter(driver=user) | Order.objects.filter(driver=None, status='Pending')
-
-        return Order.objects.filter(user=user)
+        return base_qs.filter(user=user).order_by('-created_at')
 
     def create(self, request, *args, **kwargs):
         serializer = CreateOrderSerializer(data=request.data, context={'request': request})
-        if serializer.is_valid():
-            order = serializer.save()
-            return Response(OrderSerializer(order).data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
+        order = serializer.save()
+        return Response(OrderSerializer(order).data, status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=['post'])
     def cancel(self, request, pk=None):
@@ -78,28 +81,31 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def available_jobs(self, request):
-        if not request.user.userprofile.role == 'Driver':
-             return Response({'error': 'Not authorized'}, status=status.HTTP_403_FORBIDDEN)
+        if not hasattr(request.user, 'userprofile') or request.user.userprofile.role != 'Driver':
+            return Response({'error': 'Not authorized'}, status=status.HTTP_403_FORBIDDEN)
         orders = Order.objects.filter(status='Pending', driver=None)
         serializer = self.get_serializer(orders, many=True)
         return Response(serializer.data)
 
     @action(detail=True, methods=['post'])
     def accept_job(self, request, pk=None):
-        if not request.user.userprofile.role == 'Driver':
-             return Response({'error': 'Not authorized'}, status=status.HTTP_403_FORBIDDEN)
-        order = self.get_object()
-        if order.status == 'Pending' and order.driver is None:
-            order.driver = request.user
-            order.status = 'Delivering'
-            order.save()
+        if not hasattr(request.user, 'userprofile') or request.user.userprofile.role != 'Driver':
+            return Response({'error': 'Not authorized'}, status=status.HTTP_403_FORBIDDEN)
+        with transaction.atomic():
+            order = self.get_object()
+            updated = Order.objects.filter(id=order.id, status='Pending', driver__isnull=True).update(
+                driver=request.user,
+                status='Delivering'
+            )
+
+        if updated:
             return Response({'status': 'Job accepted'})
         return Response({'error': 'Job not available'}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=['post'])
     def complete_job(self, request, pk=None):
-        if not request.user.userprofile.role == 'Driver':
-             return Response({'error': 'Not authorized'}, status=status.HTTP_403_FORBIDDEN)
+        if not hasattr(request.user, 'userprofile') or request.user.userprofile.role != 'Driver':
+            return Response({'error': 'Not authorized'}, status=status.HTTP_403_FORBIDDEN)
         order = self.get_object()
         if order.driver == request.user:
             order.driver_confirmed = True
@@ -180,7 +186,6 @@ class VerifyOTPView(generics.GenericAPIView):
     permission_classes = [permissions.AllowAny]
     
     def post(self, request):
-        from django.utils import timezone
         from .models import EmailOTP
         
         email = request.data.get('email')
